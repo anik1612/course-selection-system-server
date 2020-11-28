@@ -1,8 +1,9 @@
 const User = require('../models/userModel');
-const LessonPlan = require('../models/lessonModel')
+const Course = require('../models/courseModel');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-const { roles } = require('../roles')
+const { roles } = require('../roles');
+const { ObjectId } = require('mongodb');
 
 async function hashPassword(password) {
     return await bcrypt.hash(password, 10);
@@ -34,9 +35,9 @@ exports.signup = async (req, res, next) => {
 
 exports.login = async (req, res, next) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return next(new Error('Email does not exist'));
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+        if (!user) return next(new Error('Username does not exist'));
         const validPassword = await validatePassword(password, user.password);
         if (!validPassword) return next(new Error('Password is not correct'))
         const accessToken = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
@@ -44,7 +45,7 @@ exports.login = async (req, res, next) => {
         });
         await User.findByIdAndUpdate(user._id, { accessToken })
         res.status(200).json({
-            data: { email: user.email, role: user.role },
+            data: { username: user.username, role: user.role, success: true },
             accessToken
         })
     } catch (error) {
@@ -61,8 +62,8 @@ exports.getUsers = async (req, res, next) => {
 
 exports.getUser = async (req, res, next) => {
     try {
-        const userId = req.params.userId;
-        const user = await User.findById(userId);
+        const role = req.params.role;
+        const user = await User.find({role: role});
         if (!user) return next(new Error('User does not exist'));
         res.status(200).json({
             data: user
@@ -90,7 +91,7 @@ exports.updateUser = async (req, res, next) => {
 exports.deleteUser = async (req, res, next) => {
     try {
         const userId = req.params.userId;
-        await User.findByIdAndDelete(userId);
+        await User.findByIdAndDelete({_id: ObjectId(userId)});
         res.status(200).json({
             data: null,
             message: 'User has been deleted'
@@ -127,5 +128,48 @@ exports.allowIfLoggedin = async (req, res, next) => {
         next();
     } catch (error) {
         next(error);
+    }
+}
+
+exports.addCourse = async (req, res, next) => {
+    try {
+        const { name, instructor, img } = req.body
+        const newCourse = new Course({ name, instructor, img });
+        await newCourse.save();
+        res.json({
+            data: newCourse,
+            success: 'course created successfully!'
+        })
+    } catch (error) {
+        next(error);
+    }
+}
+
+exports.createCourse = async (req, res, next) => {
+    try {
+        console.log(req.body);
+        const { courseName, courseId, courseTeacher, courseCredit } = req.body
+        const newCourse = new Course({ courseName, courseId, courseTeacher, courseCredit });
+        await newCourse.save();
+        res.json({
+            data: newCourse,
+            success: true
+        })
+    } catch (error) {
+        res.json({
+            success: false
+        })
+        next(error);
+    }
+}
+
+exports.getCourse = async (req, res, next) => {
+    try {
+        const courses = await Course.find({});
+        res.status(200).json({
+        data: courses
+    });
+    } catch (error) {
+        next(error)
     }
 }

@@ -10,12 +10,16 @@ router.post('/signup', userController.signup);
  
 router.post('/login', userController.login);
 
-router.get('/user/:userId', userController.allowIfLoggedin, userController.getUser);
+router.get('/course', userController.getCourse);
+router.post('/addCourse', userController.addCourse);
+router.post('/createCourse', userController.createCourse);
+
+router.get('/user/:role', userController.getUser);
  
-router.get('/users', userController.allowIfLoggedin, userController.grantAccess('readAny', 'profile'), userController.getUsers);
+router.get('/users', userController.getUsers);
  
-router.put('/user/:userId', userController.allowIfLoggedin, userController.grantAccess('updateAny', 'profile'), userController.updateUser);
+router.put('/user/:userId', userController.updateUser);
  
-router.delete('/user/:userId', userController.allowIfLoggedin, userController.grantAccess('deleteAny', 'profile'), userController.deleteUser);
+router.delete('/user/:userId', userController.deleteUser);
  
 module.exports = router;
