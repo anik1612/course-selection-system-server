@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
 const Course = require('../models/courseModel');
+const EnrolledCourse = require('../models/enrolledCourseModel')
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { roles } = require('../roles');
@@ -15,9 +16,9 @@ async function validatePassword(plainPassword, hashedPassword) {
 
 exports.signup = async (req, res, next) => {
     try {
-        const { username, password, role } = req.body
+        const { name, username, password, role } = req.body
         const hashedPassword = await hashPassword(password);
-        const newUser = new User({ username, password: hashedPassword, role: role || "student" });
+        const newUser = new User({ name, username, password: hashedPassword, role: role || "student" });
         const accessToken = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
             expiresIn: "1d"
         });
@@ -45,7 +46,7 @@ exports.login = async (req, res, next) => {
         });
         await User.findByIdAndUpdate(user._id, { accessToken })
         res.status(200).json({
-            data: { username: user.username, role: user.role, success: true },
+            data: { name: user.name, username: user.username, role: user.role, success: true, id: user._id },
             accessToken
         })
     } catch (error) {
@@ -63,7 +64,7 @@ exports.getUsers = async (req, res, next) => {
 exports.getUser = async (req, res, next) => {
     try {
         const role = req.params.role;
-        const user = await User.find({role: role});
+        const user = await User.find({ role: role });
         if (!user) return next(new Error('User does not exist'));
         res.status(200).json({
             data: user
@@ -75,13 +76,15 @@ exports.getUser = async (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
     try {
-        const update = req.body
+        const { password } = req.body;
+        const hashedPassword = await hashPassword(password);
         const userId = req.params.userId;
-        await User.findByIdAndUpdate(userId, update);
-        const user = await User.findById(userId)
+        console.log(userId, hashedPassword);
+        await User.findByIdAndUpdate(ObjectId(userId), { password: hashedPassword });
+        const user = await User.findById(ObjectId(userId))
         res.status(200).json({
             data: user,
-            message: 'User has been updated'
+            message: 'password has been updated'
         });
     } catch (error) {
         next(error)
@@ -91,7 +94,7 @@ exports.updateUser = async (req, res, next) => {
 exports.deleteUser = async (req, res, next) => {
     try {
         const userId = req.params.userId;
-        await User.findByIdAndDelete({_id: ObjectId(userId)});
+        await User.findByIdAndDelete({ _id: ObjectId(userId) });
         res.status(200).json({
             data: null,
             message: 'User has been deleted'
@@ -147,9 +150,27 @@ exports.addCourse = async (req, res, next) => {
 
 exports.createCourse = async (req, res, next) => {
     try {
-        console.log(req.body);
-        const { courseName, courseId, courseTeacher, courseCredit } = req.body
-        const newCourse = new Course({ courseName, courseId, courseTeacher, courseCredit });
+        const {
+            courseName,
+            courseId,
+            courseTeacher,
+            courseCredit,
+            classRoomNum,
+            classDay,
+            startTime,
+            endTime } = req.body;
+
+        const newCourse = new Course({
+            courseName,
+            courseId,
+            courseTeacher,
+            courseCredit,
+            classRoomNum,
+            classDay,
+            startTime,
+            endTime
+        });
+
         await newCourse.save();
         res.json({
             data: newCourse,
@@ -167,8 +188,63 @@ exports.getCourse = async (req, res, next) => {
     try {
         const courses = await Course.find({});
         res.status(200).json({
-        data: courses
-    });
+            data: courses
+        });
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.CourseByTeacher = async (req, res, next) => {
+    try {
+        const courseTeacher = req.params.name;
+        const courses = await Course.find({ courseTeacher: courseTeacher });
+        res.status(200).json({
+            data: courses
+        });
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.enrolledCourse = async (req, res, next) => {
+    try {
+        const enrolledCourse = req.body;
+        const enrolledCourses = EnrolledCourse.insertMany(enrolledCourse)
+        res.json({
+            data: enrolledCourses,
+            success: true
+        })
+    } catch (error) {
+        res.json({
+            success: false
+        })
+        next(error);
+    }
+}
+
+exports.enrolledCourses = async (req, res, next) => {
+    try {
+        const username = req.query.username;
+        const courses = await EnrolledCourse.find({ username: username });
+        res.status(200).json({
+            data: courses,
+            success: true,
+        });
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.deleteCourse = async (req, res, next) => {
+    try {
+        const id = req.params.id;
+        await Course.findByIdAndDelete({ _id: ObjectId(id) });
+        res.status(200).json({
+            data: null,
+            message: 'Course has been deleted',
+            success: true
+        });
     } catch (error) {
         next(error)
     }
