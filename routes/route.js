@@ -25,7 +25,10 @@ router.delete('/user/:userId', userController.deleteUser);
 router.post('/enrolledCourse', userController.enrolledCourse)
 router.get('/enrolledCourses', userController.enrolledCourses)
 router.delete('/course/:id', userController.deleteCourse)
+router.get('/course/EnrolledCourseInfo', userController.getAllEnrolledCourse)
+router.get('/student/result', userController.getMarkByUser)
 
 router.get('/teacher/:name', userController.CourseByTeacher)
+router.post('/teacher/insertMarks', userController.marks)
 
 module.exports = router;

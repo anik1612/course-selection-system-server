@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { roles } = require('../roles');
 const { ObjectId } = require('mongodb');
+const Result = require('../models/marks');
 
 async function hashPassword(password) {
     return await bcrypt.hash(password, 10);
@@ -245,6 +246,50 @@ exports.deleteCourse = async (req, res, next) => {
             message: 'Course has been deleted',
             success: true
         });
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.getAllEnrolledCourse = async (req, res, next) => {
+    try {
+        const allEnrolledCourse = await EnrolledCourse.find({})
+        res.status(200).json({
+            data: allEnrolledCourse,
+            success: true
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.marks = async (req, res, next) => {
+    try {
+        const { username, marks, courseName } = req.body
+        const newData = await new Result({
+            courseName,
+            username,
+            marks
+        })
+        await newData.save();
+        res.json({
+            data: newData,
+            success: true,
+            message: 'Marks added successfully'
+        })
+    } catch (error) {
+        next(error)
+    }
+}
+
+exports.getMarkByUser = async (req, res, next) => {
+    try {
+        const username = req.query.username;
+        const result = await Result.find({ username: username });
+        res.status(200).json({
+            data: result,
+            success: true
+        })
     } catch (error) {
         next(error)
     }
