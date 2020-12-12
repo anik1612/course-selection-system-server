@@ -1,2 +1,3 @@
-# UU
-Good Luck Guys!
+# Course Selection System 
+
+### Anik Sarker
