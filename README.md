@@ -21,12 +21,12 @@ A single page course management system web app.
 * Mongoose
 
 For observe this backend
- ` bash 
+ ``` bash 
  * npm i
  * make a .env file in project root directory
  * then configure .env with your credential 
  * npm start 
  * now goto localhost:5000 and you can see a message 'server up and running'
- `
+ ```
 
 [Front-end Repository](https://github.com/anik1612/course-selection-system-client)
